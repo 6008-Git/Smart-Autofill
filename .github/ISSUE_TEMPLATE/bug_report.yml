@@ -1,0 +1,42 @@
+name: Bug / 表单兼容性问题
+description: 报告漏触发、识别不准确或填写失败，使用虚构资料复现。
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: 请删除姓名、电话、证件号、Cookie 和 token。下拉框不触发是当前设计行为。
+  - type: input
+    id: environment
+    attributes:
+      label: 浏览器与扩展版本
+      placeholder: Edge 155 / Smart Autofill 0.3.2
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+      description: 说明点击或 Alt+Z 触发方式；优先提供虚构的最小 HTML。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果与脱敏截图
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 已确认
+      options:
+        - label: 重新加载扩展后已刷新测试网页。
+          required: true
+        - label: 提交内容不包含个人资料或登录凭据。
+          required: true

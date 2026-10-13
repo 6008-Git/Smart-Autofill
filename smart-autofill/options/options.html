@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>个人资料 · Smart Autofill</title>
+  <link rel="stylesheet" href="options.css">
+  <script src="../data/field-rules.js" defer></script>
+  <script src="../data/resume-schema.js" defer></script>
+  <script src="../data/profile.js" defer></script>
+  <script src="options.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="page-header">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">S</span> Smart Autofill <span class="version">0.3.0</span></div>
+      <h1>个人资料</h1>
+      <p>维护一次，在需要填写时选择。每次只填写你当前选中的输入框。</p>
+    </header>
+    <aside class="local-note"><span class="local-dot" aria-hidden="true"></span>资料仅保存在本地浏览器，不会上传。Chrome 与 Edge 的资料分别保存。</aside>
+    <form id="profile-form" autocomplete="off">
+      <nav id="section-nav" aria-label="资料分类"></nav>
+      <div id="profile-fields" aria-busy="true"></div>
+      <footer class="save-bar">
+        <p id="save-status" role="status" aria-live="polite">正在读取本地资料…</p>
+        <button id="save-button" type="submit" class="primary" disabled>保存资料</button>
+      </footer>
+    </form>
+    <section class="backup-card" aria-labelledby="backup-title">
+      <div><h2 id="backup-title">备份与迁移</h2><p>导出 JSON 备份，或导入已有资料。备份文件包含个人资料，请妥善保存。</p></div>
+      <div class="backup-actions">
+        <button id="export-button" type="button" disabled>导出已保存资料</button>
+        <label class="file-button">导入 JSON 文件<input id="import-file" type="file" accept=".json,application/json" disabled></label>
+      </div>
+      <p class="hint">支持 { "profile": { "basic": { "name": "张三" } } } 或 { "name": "张三", "phone": "13800000000" }。导入会替换全部已保存资料，未提供的字段将清空。</p>
+      <div id="import-preview" class="import-preview" hidden>
+        <p id="import-summary"></p>
+        <ul id="import-breakdown" class="import-breakdown" aria-label="导入资料分类明细"></ul>
+        <button id="confirm-import" type="button" class="primary">确认替换资料</button>
+        <button id="cancel-import" type="button">取消</button>
+      </div>
+      <p id="backup-status" role="status" aria-live="polite"></p>
+    </section>
+    <p class="page-footnote">开始使用：打开表单页面 → 点击输入框 → 选择浮窗中的字段。不会自动提交表单。</p>
+  </main>
+</body>
+</html>

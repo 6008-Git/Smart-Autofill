@@ -1,0 +1,15 @@
+artifacts/
+*.log
+personal-data/
+dist/
+node_modules/
+.codex/
+.agents/
+.env
+.env.*
+*.pem
+*.key
+*.crx
+__pycache__/
+.DS_Store
+Thumbs.db

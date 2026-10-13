@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安装与使用说明
+    url: https://github.com/6008-Git/Smart-Autofill#快速开始
+    about: 先确认支持的控件类型，并在扩展更新后刷新网页。

@@ -1,0 +1,22 @@
+name: Feature / 改进建议
+description: 描述希望减少的重复操作及具体使用场景。
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 希望解决什么问题？
+      description: 使用虚构资料说明场景与当前操作。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议的交互与预期收益
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 权限、隐私与支持边界
+      description: 如涉及新增权限、网络请求、自动操作或复杂控件，请说明必要性。

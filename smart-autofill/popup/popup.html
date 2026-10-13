@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Autofill</title>
+  <link rel="stylesheet" href="popup.css">
+  <script src="../data/field-rules.js" defer></script>
+  <script src="../data/resume-schema.js" defer></script>
+  <script src="../data/profile.js" defer></script>
+  <script src="popup.js" defer></script>
+</head>
+<body>
+  <header><span class="brand-mark" aria-hidden="true">S</span><div><h1>Smart Autofill</h1><p>半自动表单填写助手</p></div></header>
+  <p id="popup-status" class="status" role="status">正在读取资料…</p>
+  <dl id="profile-summary"></dl>
+  <button id="manage-button" type="button">管理个人资料</button>
+  <p class="tip">点击网页输入框，在浮窗中选择字段后填写。未弹出时，保持输入框焦点，按 Alt+Z 手动唤起。下拉框由你自己选择。</p>
+  <footer>所有资料仅存储在本地浏览器</footer>
+</body>
+</html>

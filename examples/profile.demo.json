@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "profile": {
+    "basic": {
+      "name": "示例同学",
+      "phone": "13800000000",
+      "email": "student@example.invalid",
+      "graduationCohort": "2027届"
+    },
+    "educationHistory": {
+      "records": [
+        { "school": "示例大学", "college": "示例学院", "educationLevel": "硕士", "degree": "硕士", "major": "计算机科学", "dateRange": "2024.09-2027.06" },
+        { "school": "示例本科大学", "college": "示例工学院", "educationLevel": "本科", "degree": "学士", "major": "软件工程", "dateRange": "2020.09-2024.06" }
+      ]
+    },
+    "workExperience": {
+      "records": [
+        { "company": "示例科技公司", "position": "开发实习生", "dateRange": "2025.06-2025.09", "employmentType": "实习", "responsibilities": ["参与示例应用开发。", "编写测试和维护文档。"], "departureReason": "实习结束" }
+      ]
+    },
+    "projects": {
+      "records": [
+        { "name": "示例校园应用", "role": "开发者", "dateRange": "2025.03-2025.05", "summary": "虚构项目，仅用于说明资料结构。", "highlights": ["提供信息检索功能。", "完善表单交互与测试。"] }
+      ]
+    },
+    "job": { "targetPositions": ["开发工程师"], "preferredWorkCities": ["示例城市"] },
+    "skills": { "categories": { "programmingLanguages": ["JavaScript", "Python"] } },
+    "selfAssessment": { "summary": "这是一段虚构自我评价，仅供独立测试使用。" }
+  }
+}

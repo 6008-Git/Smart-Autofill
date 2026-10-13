@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Smart Autofill · 半自动表单填写助手",
+  "version": "0.3.2",
+  "description": "点击输入框，选择个人资料，一次只填写当前字段。所有资料仅保存在本地浏览器。",
+  "permissions": ["storage"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup/popup.html", "default_title": "Smart Autofill" },
+  "options_page": "options/options.html",
+  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "content_scripts": [{
+    "matches": ["http://*/*", "https://*/*"],
+    "js": ["data/field-rules.js", "data/resume-schema.js", "data/profile.js", "data/field-tree.js", "content/detector.js", "content/filler.js", "content/floating-menu.js", "content/content.js"],
+    "css": ["styles/content.css"],
+    "run_at": "document_idle",
+    "all_frames": true,
+    "match_about_blank": true
+  }]
+}

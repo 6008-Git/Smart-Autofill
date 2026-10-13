@@ -1,0 +1,17 @@
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { width: 300px; margin: 0; padding: 20px; color: #172b36; background: #fff; font: 14px/1.6 system-ui, "Microsoft YaHei", sans-serif; }
+header { display: flex; align-items: center; gap: 12px; }
+.brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: #0f766e; color: #fff; font-size: 22px; }
+h1 { margin: 0; font-size: 18px; }
+header p { margin: 0; color: #52616b; font-size: 12px; }
+.status { margin: 20px 0 12px; padding: 8px 12px; background: #edf8f4; color: #115e59; border-radius: 6px; }
+dl { margin: 0 0 20px; }
+.summary-row { display: grid; grid-template-columns: 64px minmax(0, 1fr); padding: 7px 0; border-bottom: 1px solid #e2e8f0; }
+dt { color: #52616b; }
+dd { margin: 0; overflow-wrap: anywhere; }
+button { width: 100%; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 6px; color: #fff; background: #0f766e; font: inherit; font-weight: 600; cursor: pointer; }
+button:hover { background: #115e59; }
+button:focus-visible { outline: 2px solid #0f766e; outline-offset: 3px; }
+.tip { margin: 14px 0; color: #52616b; font-size: 13px; }
+footer { padding-top: 12px; border-top: 1px solid #e2e8f0; color: #52616b; font-size: 12px; }

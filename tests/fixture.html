@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>MVP 本地验收表单</title>
+<style>
+body { margin: 40px auto; padding: 0 24px; max-width: 900px; font: 16px/1.6 system-ui, sans-serif; color: #172b36; }
+h1 { font-size: 24px; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 40px; }
+label { display: block; } input, textarea { display: block; width: 100%; box-sizing: border-box; padding: 8px; min-height: 40px; font: inherit; border: 1px solid #94a3b8; border-radius: 4px; }
+button { padding: 12px; } #outside { margin: 20px 0; padding: 10px; background: #edf8f4; }
+@media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+</style></head><body>
+<h1>MVP 验收表单</h1><p>仅使用虚构测试资料。此页面不属于扩展运行代码。</p>
+<div class="grid">
+<div><label for="phone">手机号</label><input id="phone" type="text"></div>
+<div><input id="email" type="email" placeholder="请输入邮箱" aria-label="邮箱"></div>
+<div><label for="school">毕业院校</label><input id="school" name="graduateSchool"></div>
+<div><label for="tracked">原生 setter 兼容性测试</label><input id="tracked" name="mobilePhone"></div>
+<div><label for="model">input 事件绑定测试</label><input id="model" autocomplete="tel"></div>
+<div><label for="text">详细地址</label><textarea id="text"></textarea></div>
+<div><label for="password">密码（应忽略）</label><input id="password" type="password"></div>
+<div><label for="number">邮编（数字框）</label><input id="number" type="number"></div>
+<div><label for="readonly">只读（应忽略）</label><input id="readonly" readonly></div>
+<div><label for="unsupported">日期（MVP 不支持）</label><input id="unsupported" type="date"></div>
+<div><label>contenteditable（第二阶段）</label><div id="editable" contenteditable="true">不要填写</div></div>
+<div><label for="unknown">无匹配关键词</label><input id="unknown"></div>
+<div><label for="stopped">阻止事件冒泡的手机号</label><input id="stopped" type="tel"></div>
+<div><label>Shadow DOM 手机号</label><div id="shadow-field"></div></div>
+<div><label>Shadow DOM 下拉框（应忽略）</label><div id="shadow-dropdown" role="combobox"></div></div>
+</div>
+<section aria-label="下拉框排除验收">
+<h2>下拉框：只由用户选择</h2>
+<label for="native-select">原生下拉框</label><select id="native-select"><option value="">请选择</option><option value="本科">本科</option></select>
+<label for="datalist-input">原生候选列表</label><input id="datalist-input" list="city-options" placeholder="城市"><datalist id="city-options"><option value="北京"></datalist>
+<label for="combo-input">可输入的下拉框</label><input id="combo-input" role="combobox" aria-expanded="false" aria-controls="dropdown-options" placeholder="学历">
+<div role="combobox" aria-expanded="false"><label for="wrapped-combo">父层声明的下拉框</label><div><input id="wrapped-combo" placeholder="学校"></div></div>
+<label for="popup-input">弹出选择框</label><input id="popup-input" aria-haspopup="listbox" placeholder="省份">
+<label for="linked-input">关联下拉列表</label><input id="linked-input" aria-controls="dropdown-options" placeholder="城市"><ul id="dropdown-options" role="listbox" hidden><li role="option">示例城市</li></ul>
+<label for="expanded-input">仅声明展开状态的下拉框</label><input id="expanded-input" aria-expanded="false" placeholder="学位">
+<label for="autocomplete-list">自动补全候选下拉框</label><input id="autocomplete-list" aria-autocomplete="list" placeholder="学校">
+<label for="select-placeholder">缺少语义的选择输入框</label><input id="select-placeholder" placeholder="请选择学历">
+<label for="dynamic-dropdown">聚焦后切换为下拉框</label><input id="dynamic-dropdown" placeholder="手机号">
+</section>
+<p id="outside" tabindex="0">点击这里，菜单应关闭。</p>
+<button id="script-focus" type="button">通过脚本 focus 手机号（应无菜单）</button>
+<div style="height:700px"></div><label for="bottom">底部手机号</label><input id="bottom" type="tel">
+<script>
+window.events = [];
+document.getElementById('stopped').addEventListener('click', event => event.stopImmediatePropagation());
+document.getElementById('stopped').addEventListener('keydown', event => event.stopImmediatePropagation());
+for (const id of ['shadow-field','shadow-dropdown']) {
+  const root = document.getElementById(id).attachShadow({mode:'open'});
+  root.innerHTML = '<input type="tel" placeholder="手机号" style="width:90%;height:40px">';
+}
+document.addEventListener('input', event => window.events.push({ type: event.type, id: event.target.id }));
+document.addEventListener('change', event => window.events.push({ type: event.type, id: event.target.id }));
+// Simulate a controlled input's own property tracker. The extension must bypass it.
+const tracked = document.getElementById('tracked');
+const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+let trackerValue = '';
+window.controlledState = '';
+Object.defineProperty(tracked, 'value', {
+  get() { return descriptor.get.call(this); },
+  set(value) { trackerValue = String(value); descriptor.set.call(this, value); }
+});
+tracked.addEventListener('input', () => {
+  if (tracked.value !== trackerValue) { window.controlledState = tracked.value; trackerValue = tracked.value; }
+});
+window.modelState = '';
+document.getElementById('model').addEventListener('input', event => { window.modelState = event.target.value; });
+document.getElementById('script-focus').addEventListener('click', () => document.getElementById('phone').focus());
+</script>
+</body></html>

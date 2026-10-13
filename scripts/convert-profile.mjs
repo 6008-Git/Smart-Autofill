@@ -56,7 +56,7 @@ for (const field of sourceDescriptors) {
     let cursor = 0;
     const destination = field.path.map(part => part === '*' ? entry.indices[cursor++] : part);
     const expected = field.schema.type === 'list' ? entry.value.map(item => item === null ? '' : String(item)) : entry.value === null ? '' : String(entry.value);
-    assert.ok(JSON.stringify(saf.getPath(normalized, destination)) === JSON.stringify(expected), `Conversion mismatch: ${destination.join('.')}`);
+    assert.ok(JSON.stringify(saf.getPath(profile, destination)) === JSON.stringify(expected), `Conversion mismatch: ${destination.join('.')}`);
   }
 }
 const importData = { version: saf.PROFILE_VERSION, profile: normalized };
@@ -74,7 +74,7 @@ const mapping = {
   version: 2,
   groups: Object.fromEntries(saf.GROUPS.map(group => [group.key, group.label])),
   fields: descriptors.map(field => ({
-    key: field.path.join('.'), label: field.label, group: field.group, type: field.schema.type,
+    key: field.path.join('.'), label: field.label, group: field.group, type: field.schema.type, fillable: field.schema.fillable !== false,
     autocomplete: field.schema.autocomplete?.[0] || null,
     fallbackSources: field.schema.legacyKey ? saf.COMMON_FIELD_SOURCES[field.schema.legacyKey] || [] : [],
     sourceFile: field.sourceFile || null, sourcePath: field.sourceFile ? field.sourcePath.join('.') : null

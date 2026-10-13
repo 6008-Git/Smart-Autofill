@@ -7,7 +7,7 @@
   const list = (label, extra = {}) => ({ type: "list", label, source: label, ...extra });
   const object = (label, properties, extra = {}) => ({ type: "object", label, properties, source: label, ...extra });
   const records = (label, properties, extra = {}) => ({ type: "records", label, item: object(label, properties), source: label, ...extra });
-  const sources = () => list("数据来源", { keywords: ["数据来源", "data sources"] });
+  const sources = () => list("数据来源 / 导入说明", { source: "数据来源", fillable: false, keywords: ["数据来源", "data sources"] });
   const legacy = (key, extra = {}) => {
     const rule = saf.FIELD_RULES.find(field => field.key === key);
     return text(rule.label, { source: null, legacyKey: key, keywords: rule.keywords, autocomplete: rule.autocomplete, types: rule.types, ...extra });
@@ -42,7 +42,7 @@
       campusApplication: object("校园招聘投递", {
         company: text("公司"), recruitmentCohort: text("招聘届次"), positionCategory: text("职位方向"), subCategory: text("子方向"),
         firstChoice: text("志愿一"), preferredCities: list("意向工作城市"), referralCode: text("推荐码"),
-        acceptReassignment: text("是否服从调剂"), applicationStatus: text("投递状态"), pendingItems: list("待补充项")
+        acceptReassignment: text("是否服从调剂"), applicationStatus: text("投递状态"), pendingItems: list("待补充项", { fillable: false })
       }, { source: "2027校园招聘投递" }), dataSources: sources()
     }, { source: null, sourceFile: "求职意向.json", note: "期望岗位、城市、薪资与投递信息" }),
     educationHistory: object("教育经历", {
@@ -50,8 +50,8 @@
         educationLevel: text("学历"), degree: text("学位"), studyMode: text("学习形式"), school: text("学校"),
         schoolTags: text("学校标签"), college: text("学院"), major: text("专业"), city: text("城市"), dateRange: text("起止时间"),
         coursework: long("专业课程"), researchFocus: long("研究方向"), thesisTitle: long("毕业论文"), classRank: text("专业排名"),
-        overseasEducation: text("是否海外教育经历"), minorOrDualDegree: text("辅修双学位"), supervisor: text("导师"),
-        gpa: text("成绩GPA"), laboratory: text("实验室"), notes: long("备注")
+        overseasEducation: text("是否海外教育经历"), minorOrDualDegree: text("辅修双学位"), supervisor: text("导师", { singleValue: true }),
+        gpa: text("成绩GPA"), laboratory: text("实验室"), notes: long("备注", { fillable: false })
       }), dataSources: sources()
     }, { source: null, sourceFile: "教育经历.json", note: "分别维护每一段教育经历" }),
     workExperience: object("工作与实习经历", {
@@ -66,7 +66,7 @@
         name: text("姓名", { keywords: ["家庭成员姓名", "亲属姓名", "家属姓名", "family member name"] }),
         relationship: text("关系"), phone: text("电话", { keywords: ["家属电话", "家庭成员电话", "family member phone"] }),
         employer: text("工作单位"), position: text("职位"), politicalStatus: text("政治面貌")
-      }), dataSources: sources(), notes: long("备注")
+      }), dataSources: sources(), notes: long("备注", { fillable: false })
     }, { source: null, sourceFile: "家庭情况.json", note: "每位家庭成员单独一条记录" }),
     certificates: object("荣誉证书", {
       records: records("荣誉证书", {
@@ -97,7 +97,7 @@
       categories: object("专业技能", {
         programmingLanguages: list("编程语言"), aiSkills: list("大模型 / AI"), frontendSkills: list("前端开发"),
         backendAndDatabaseSkills: list("后端 / 数据库"), otherSkills: list("其他")
-      }), proficiency: object("技能掌握程度", { proficient: list("熟练"), good: list("良好") }), dataSources: sources(), notes: long("备注")
+      }), proficiency: object("技能掌握程度", { proficient: list("熟练"), good: list("良好") }), dataSources: sources(), notes: long("备注", { fillable: false })
     }, { source: null, sourceFile: "专业技能.json", note: "按类别与掌握程度维护；列表每行一项" }),
     selfAssessment: object("自我评价", {
       summary: long("自我评价", { keywords: ["自我评价", "个人评价", "self assessment", "self evaluation", "personal summary"] }), dataSources: sources()

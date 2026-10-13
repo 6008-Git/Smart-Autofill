@@ -8,7 +8,7 @@
 
 面向校招、实习与信息登记的本地浏览器扩展。点击输入框，选择已有资料，确认后填写。
 
-[![Version](https://img.shields.io/badge/version-0.3.2-2563eb)](https://github.com/6008-Git/Smart-Autofill/releases)
+[![Version](https://img.shields.io/badge/version-0.3.3-2563eb)](https://github.com/6008-Git/Smart-Autofill/releases)
 [![Chrome / Edge](https://img.shields.io/badge/browser-Chrome%20%2F%20Edge-0f766e)](#快速开始)
 [![Manifest V3](https://img.shields.io/badge/extension-Manifest%20V3-475569)](smart-autofill/manifest.json)
 [![Tests](https://github.com/6008-Git/Smart-Autofill/actions/workflows/ci.yml/badge.svg)](https://github.com/6008-Git/Smart-Autofill/actions/workflows/ci.yml)
@@ -111,6 +111,8 @@ LLM 适合开放式回答、岗位相关内容组织和复杂语义理解。本�
 
 导入先预览，再确认替换全部资料；导出用于保存备份。常用教育字段未单独维护时，从同一条最近开始的教育经历读取；可编辑覆盖，不会把不同学校的资料混合补齐。
 
+“信息表单”“网申”“某表单填……”等明确的来源标记会移入备注或数据来源，填写时只使用实际内容。备注、来源和待补充项保留在管理页，不作为填写候选；有冲突的单值字段需要确认。高中经历可单独维护，不推断学位或专业。
+
 ## 隐私与边界
 
 - 资料保存在本地浏览器 `chrome.storage.local`，扩展不调用远程模型、不上传整份简历、不添加统计上报。
@@ -131,7 +133,7 @@ node scripts/verify-public.mjs
 python scripts/package-extension.py
 ```
 
-本地验收：**28 项单元测试通过，Chrome / Edge 各 46 项浏览器检查通过**。浏览器检查使用独立配置、虚构资料和 DevTools Protocol，没有引入 Playwright、Selenium 或应用后端。CI 运行单元测试、公开文件检查和扩展打包；浏览器检查按 [验收说明](doc/acceptance.md) 手动复现。
+本地验收：**35 项单元测试通过，Chrome / Edge 各 48 项浏览器检查通过**。浏览器检查使用独立配置、虚构资料和 DevTools Protocol，没有引入 Playwright、Selenium 或应用后端。CI 运行单元测试、公开文件检查和扩展打包；浏览器检查按 [验收说明](doc/acceptance.md) 手动复现。
 
 ```text
 smart-autofill/   可直接加载的扩展

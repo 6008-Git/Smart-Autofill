@@ -17,6 +17,8 @@ const executables = {
 };
 assert.ok(executables[browserName], 'Use chrome or edge');
 const profileDir = mkdtempSync(resolve(artifacts, `smoke-${browserName}-`));
+const downloadDir = resolve(profileDir, 'downloads');
+mkdirSync(downloadDir);
 const child = spawn(executables[browserName], [
   '--headless=new', '--remote-debugging-pipe', '--enable-unsafe-extension-debugging',
   '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
@@ -371,19 +373,19 @@ try {
   assert.equal(await evaluate(options, '(async () => (await chrome.storage.local.get("profile")).profile.basic.phone)()'), '13900000000');
   pass('invalid JSON data preserves saved profile');
 
-  rmSync(resolve(artifacts, 'smart-autofill-profile.json'), { force: true });
-  await send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: artifacts, eventsEnabled: true });
+  rmSync(resolve(downloadDir, 'smart-autofill-profile.json'), { force: true });
+  await send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: downloadDir, eventsEnabled: true });
   const downloadEvents = [];
   on('Browser.downloadProgress', params => downloadEvents.push(params));
   await click(options, '#export-button');
   for (let i = 0; i < 100 && !downloadEvents.some(event => event.state === 'completed'); i++) await delay(50);
   assert.ok(downloadEvents.some(event => event.state === 'completed'), 'JSON download complete');
-  const backup = JSON.parse(readFileSync(resolve(artifacts, 'smart-autofill-profile.json'), 'utf8'));
+  const backup = JSON.parse(readFileSync(resolve(downloadDir, 'smart-autofill-profile.json'), 'utf8'));
   assert.equal(backup.profile.basic.phone, '13900000000');
   pass('JSON export downloads valid saved-profile backup');
   const expandedProfile = { version: 2, profile: {
     basic: { name: '完整资料测试姓名', phone: '13900000000', emergencyContact: {name: '示例紧急联系人', phone:'01000000000'} },
-    educationHistory: { records: [{ school: '示例大学一', major:'示例专业一',college:'示例学院一',educationLevel:'本科',degree:'学士',dateRange:'2018.09-2022.06' }, { school: '示例大学二', major:'示例专业二',college:'示例学院二',educationLevel:'硕士',degree:'硕士',dateRange:'2024-09-01 至 2027-06-30', notes:'备注第一段\n第二段' }] },
+    educationHistory: { records: [{ school: '示例大学一', major:'示例专业一',college:'示例学院一',educationLevel:'本科',degree:'学士',dateRange:'2018.09-2022.06',researchFocus:'网页开发、嵌入式开发（信息3表单）；字节表单填「区块链、LLM」' }, { school: '示例大学二', major:'示例专业二',college:'示例学院二',educationLevel:'硕士',degree:'硕士',dateRange:'2024-09-01 至 2027-06-30', notes:'备注第一段\n第二段' }, {school:'示例高中',educationLevel:'高中',city:'示例省示例市示例县',dateRange:'2015-09-01 至 2018-06-10'}] },
     workExperience: { records: [{ company:'示例公司一',position:'过去岗位',dateRange:'2019-01 至 2022-01', responsibilities:['工作一','工作二'] }, { company:'示例公司二',position:'当前岗位',dateRange:'2024-07-01 至今',responsibilities:['职责第一条','职责第二条'] }] },
     family: { records:[{name:'示例成员一',relationship:'父亲'}] }, certificates: {records:[{name:'示例证书',score:'00123'}]},
     awards: {records:[{name:'示例奖励'}]}, publications: {records:[{title:'示例论文',status:'示例状态'}]},
@@ -397,7 +399,7 @@ try {
   const {nodeId: expandedInput} = await send('DOM.querySelector', {nodeId:expandedRoot.nodeId,selector:'#import-file'}, options);
   await send('DOM.setFileInputFiles', {nodeId:expandedInput,files:[importPath]}, options);
   await until(options, '!document.querySelector("#import-preview").hidden', 'complete profile preview');
-  assert.equal(await evaluate(options, 'document.querySelector("#import-breakdown").textContent.includes("教育经历：2 条")'), true);
+  assert.equal(await evaluate(options, 'document.querySelector("#import-breakdown").textContent.includes("教育经历：3 条")'), true);
   await click(options, '#confirm-import');
   await until(options, 'document.querySelector("#backup-status").textContent === "导入完成。"', 'complete profile imported');
   assert.equal(await evaluate(options, 'document.getElementById("profile-educationHistory-records-1-school").value'), '示例大学二');
@@ -424,7 +426,7 @@ try {
   pass('all seven record categories show content summaries in profile management');
   const oldSchoolValue=await evaluate(session,'document.getElementById("school").value');
   await click(session,'#school');
-  assert.equal(await evaluate(session,'document.querySelector(".saf-menu").dataset.version'),'0.3.2');
+  assert.equal(await evaluate(session,'document.querySelector(".saf-menu").dataset.version'),'0.3.3');
   assert.equal(await evaluate(session,'!!document.querySelector(".saf-picker")'),false);
   await click(session,'.saf-cascade-trigger');
   await click(session,'.saf-cascade-branch[data-node-id="education"]');
@@ -452,6 +454,21 @@ try {
   await key(session,'Escape');
   assert.equal(await evaluate(session,'!!document.querySelector(".saf-menu")'),false);
   pass('cascade supports keyboard columns, vertical navigation and Escape dismissal');
+  await click(session,'#text');
+  await click(session,'.saf-cascade-trigger');
+  await click(session,'.saf-cascade-branch[data-node-id="educationHistory"]');
+  await click(session,'.saf-cascade-branch[data-node-id="educationHistory.records.0"]');
+  assert.equal(await evaluate(session,'Array.from(document.querySelectorAll(".saf-cascade-leaf")).some(node=>/notes|dataSources|pendingItems/.test(node.dataset.fieldKey))'),false);
+  await click(session,'.saf-cascade-leaf[data-field-key="educationHistory.records.0.researchFocus"]');
+  await click(session,'.saf-confirm');
+  assert.equal(await evaluate(session,'document.getElementById("text").value'),'网页开发、嵌入式开发；区块链、LLM');
+  assert.equal(await evaluate(options,'document.getElementById("profile-educationHistory-records-0-notes").value.includes("信息3表单")'),true);
+  pass('imported source annotations remain in maintenance notes and never enter filled research content');
+  await click(session,'#school');
+  await selectCascade(session,['educationHistory','educationHistory.records.2'],'educationHistory.records.2.school');
+  assert.equal(await evaluate(session,'document.getElementById("school").value'),'示例高中');
+  assert.equal(await evaluate(options,'document.getElementById("profile-school").value'),'示例大学二');
+  pass('secondary-school record fills independently while university defaults stay intact');
   await click(session,'#phone');
   await click(session,'.saf-cascade-trigger');
   await click(session,'.saf-cascade-branch[data-node-id="workExperience"]');
@@ -520,11 +537,11 @@ try {
   assert.equal(await evaluate(options,'document.getElementById("section-educationHistory").open'),true);
   pass('source defaults update after record edits and survive refresh while explicit overrides stay intact');
   downloadEvents.length = 0;
-  rmSync(resolve(artifacts, 'smart-autofill-profile.json'), {force:true});
+  rmSync(resolve(downloadDir, 'smart-autofill-profile.json'), {force:true});
   await click(options, '#export-button');
   for (let i=0;i<100 && !downloadEvents.some(event => event.state==='completed');i++) await delay(50);
   assert.ok(downloadEvents.some(event => event.state==='completed'));
-  const fullBackup = JSON.parse(readFileSync(resolve(artifacts,'smart-autofill-profile.json'),'utf8'));
+  const fullBackup = JSON.parse(readFileSync(resolve(downloadDir,'smart-autofill-profile.json'),'utf8'));
   assert.equal(fullBackup.version, 2);
   assert.deepEqual(fullBackup.profile, edited);
   pass('v2 export retains the complete edited profile without dropping records or arrays');

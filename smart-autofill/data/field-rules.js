@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const saf = globalThis.SmartAutofill = globalThis.SmartAutofill || {};
-  saf.VERSION = "0.3.2";
+  saf.VERSION = "0.3.3";
   // One match per source: overlapping synonyms never multiply that source's weight.
   saf.FIELD_RULES = [
     { key: "name", group: "basic", label: "姓名", keywords: ["姓名", "真实姓名", "联系人姓名", "fullname", "realname", "username", "name"], autocomplete: ["name"] },

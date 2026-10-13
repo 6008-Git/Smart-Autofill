@@ -149,3 +149,64 @@ test('all populated categories and source-backed common education are represente
   assert.equal(stats.find(group=>group.key==='educationHistory').records,1);
   assert.equal(stats.find(group=>group.key==='family').hasData,false);
 });
+
+test('source annotations move to maintenance notes and only actual research content fills',()=>{
+  const original='网页开发、嵌入式开发（信息3表单）；字节表单填「区块链、LLM」';
+  const profile=saf.parseImport(JSON.stringify({educationHistory:{records:[{researchFocus:original,degree:'学士（表单学位字段选「本科」）'}]},basic:{politicalStatus:'共青团员（表单中亦写作「团员」）',yearsOfExperience:'1年（表单填写值）'},job:{expectedSalary:'15000元/月（详细表单填写值）'}}));
+  assert.equal(saf.profileValue(profile,'educationHistory.records.0.researchFocus'),'网页开发、嵌入式开发；区块链、LLM');
+  assert.ok(profile.educationHistory.records[0].notes.includes(original));
+  assert.equal(profile.educationHistory.records[0].degree,'学士');
+  assert.equal(profile.basic.politicalStatus,'共青团员');assert.equal(profile.basic.yearsOfExperience,'1年');assert.equal(profile.job.expectedSalary,'15000元/月');
+  assert.ok(profile.basic.dataSources.some(note=>note.includes('表单中亦写作')));
+  assert.deepEqual(plain(saf.normalizeProfile(profile)),plain(profile),'cleanup must be idempotent');
+});
+
+test('real qualifications, multiline content and unannotated punctuation remain unchanged',()=>{
+  const profile=saf.parseImport(JSON.stringify({certificates:{records:[{name:'软件设计师（中级）'}]},projects:{records:[{name:'应用（Web / Mobile）',summary:'实现表单填写功能（包括表单校验）。\n保留第二段。'}]},skills:{categories:{programmingLanguages:['C++','JavaScript（ES2024）']}}}));
+  assert.equal(profile.certificates.records[0].name,'软件设计师（中级）');
+  assert.equal(profile.projects.records[0].summary,'实现表单填写功能（包括表单校验）。\n保留第二段。');
+  assert.deepEqual(plain(profile.skills.categories.programmingLanguages),['C++','JavaScript（ES2024）']);
+});
+
+test('annotated list values and role summaries are cleaned without discarding original explanations',()=>{
+  const profile=saf.parseImport(JSON.stringify({skills:{categories:{otherSkills:['网络开发（网申）','嵌入式开发（简历）']}},workExperience:{records:[{department:'开发部门（详细表单填「开发」）',position:'工程师（网申）/ 项目负责人（简历）'}]}}));
+  assert.deepEqual(plain(profile.skills.categories.otherSkills),['网络开发','嵌入式开发']);
+  assert.equal(profile.workExperience.records[0].department,'开发部门');
+  assert.equal(profile.workExperience.records[0].position,'工程师/ 项目负责人');
+  assert.ok(profile.workExperience.dataSources.some(note=>note.includes('详细表单填')));
+  assert.equal(saf.profileValue(profile,'workExperience.dataSources'),'');
+});
+
+test('conflicting annotated single-value fields stay empty until explicitly confirmed',()=>{
+  const original='导师甲（信息3详细表单）；另一个表单填「导师乙」';
+  const raw={educationHistory:{records:[{supervisor:original}]}};
+  const profile=saf.normalizeProfile(raw);
+  assert.equal(profile.educationHistory.records[0].supervisor,'');
+  assert.ok(profile.educationHistory.records[0].notes.includes('待确认'));
+  assert.equal(saf.profileValue(raw,'educationHistory.records.0.supervisor'),'');
+  profile.educationHistory.records[0].supervisor='导师甲';
+  assert.equal(saf.normalizeProfile(profile).educationHistory.records[0].supervisor,'导师甲');
+});
+
+test('secondary-school record is independently selectable and does not replace latest university defaults',()=>{
+  const profile=saf.parseImport(JSON.stringify({educationHistory:{records:[{school:'示例研究生学校',educationLevel:'硕士',dateRange:'2024.09-2027.06'},{school:'示例高中',educationLevel:'高中',city:'示例省示例市示例县',dateRange:'2015-09-01 至 2018-06-10'}]}}));
+  assert.equal(saf.profileValue(profile,'school'),'示例研究生学校');
+  assert.equal(saf.profileValue(profile,'educationHistory.records.1.school'),'示例高中');
+  assert.deepEqual(plain(saf.parseDateRange(profile.educationHistory.records[1].dateRange).map(date=>date.value)),['2015-09-01','2018-06-10']);
+  assert.equal(profile.educationHistory.records[1].major,'');assert.equal(profile.educationHistory.records[1].degree,'');
+});
+
+test('notes, data sources and pending items remain maintainable but are excluded from fill candidates',()=>{
+  const profile=saf.parseImport(JSON.stringify({educationHistory:{records:[{school:'示例学校',notes:'仅供核对'}],dataSources:['源文件']},family:{notes:'备注'},skills:{notes:'备注'},job:{campusApplication:{pendingItems:['待补充资料']}}}));
+  const fields=saf.getProfileFields(profile);
+  assert.ok(fields.every(field=>!/(?:^|\.)(notes|dataSources|pendingItems)$/.test(field.key)));
+  assert.equal(profile.educationHistory.records[0].notes,'仅供核对');
+  assert.deepEqual(plain(saf.parseImport(JSON.stringify({version:2,profile}))),plain(profile));
+});
+
+test('source archival rejects overflow without silently losing explanations or producing invalid exports',()=>{
+  assert.throws(()=>saf.parseImport(JSON.stringify({educationHistory:{records:[{researchFocus:'网页开发（网申）',notes:'x'.repeat(9999)}]}})),/合计过长/);
+  assert.throws(()=>saf.parseImport(JSON.stringify({basic:{politicalStatus:'团员（网申）',dataSources:Array.from({length:200},(_,index)=>'source'+index)}})),/超过 200 项/);
+  const value='x'.repeat(10000);
+  assert.equal(saf.parseImport(JSON.stringify({selfAssessment:{summary:value}})).selfAssessment.summary,value);
+});

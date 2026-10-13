@@ -26,7 +26,63 @@
     if (schema.type === "records") return Array.isArray(value) ? value.filter(isObject).map(item => normalize(schema.item, item)) : [];
     return Object.fromEntries(Object.entries(schema.properties).map(([key, child]) => [key, normalize(child, isObject(value) ? value[key] : undefined)]));
   }
-  saf.normalizeProfile = value => normalize(saf.PROFILE_SCHEMA, value);
+  // Recognize explicit source annotations, not meaningful qualifications such as （中级）.
+  saf.inspectFieldText = (value, singleValue = false) => {
+    const original = String(value || "");
+    let annotated = false;
+    let alternative = false;
+    let text = original.replace(/[（(]([^（）()]*)[）)]/g, (match, inner) => {
+      const source = /^(?:(?:信息\d+(?:详细)?|详细)?表单(?:$|中(?:亦)?写作|填写值|填|选|[\u4e00-\u9fffA-Za-z0-9]{0,12}字段(?:填|选))|网申$|简历$)/.test(inner.trim());
+      if (!source) return match;
+      annotated = true;
+      return "";
+    });
+    text = text.replace(/(^|[;；\n])\s*[\p{L}\p{N} _-]{0,16}表单(?:填写|填|选(?:择)?|写(?:作)?)\s*[「『“"]([^」』”"\n]+)[」』”"]/gu,
+      (_match, separator, content) => { annotated = true; alternative = true; return separator + content; });
+    if (!annotated) return { value: original, annotated: false, conflict: false };
+    text = text.replace(/[ \t]+(?=[;；/])/g, "").replace(/(?<=[;；/])[ \t]+/g, " ").trim();
+    const choices = text.split(/[;；\n]/).map(part => part.trim()).filter(Boolean);
+    const conflict = singleValue && alternative && new Set(choices).size > 1;
+    return { value: conflict ? "" : text, annotated: true, conflict };
+  };
+  saf.cleanFieldText = value => saf.inspectFieldText(value).value;
+  saf.normalizeProfile = value => {
+    const profile = normalize(saf.PROFILE_SCHEMA, value);
+    function walk(schema, data, path = [], record = null) {
+      for (const [key, child] of Object.entries(schema.properties)) {
+        if (child.fillable === false) continue;
+        if (child.type === "text" || child.type === "list") {
+          const entries = child.type === "list" ? data[key] : [data[key]];
+          data[key] = entries.map(entry => {
+            const cleaned = saf.inspectFieldText(entry, child.singleValue);
+            if (cleaned.annotated) {
+              const note = `${cleaned.conflict ? "待确认 · " : "导入说明 · "}${child.label}：${entry}`;
+              if (note.length > 10000) throw new Error("原始表单说明过长，请先整理资料后再导入。");
+              if (record && own(record, "notes")) {
+                if (!record.notes.split("\n").includes(note)) {
+                  const combined = record.notes + `${record.notes ? "\n" : ""}${note}`;
+                  if (combined.length > 10000) throw new Error("备注与原始表单说明合计过长，请先整理资料后再导入。");
+                  record.notes = combined;
+                }
+              } else {
+                const sources = profile[path[0]]?.dataSources;
+                if (sources && !sources.includes(note)) {
+                  if (sources.length >= 200) throw new Error("数据来源与原始表单说明超过 200 项，请先整理资料后再导入。");
+                  sources.push(note);
+                }
+              }
+            }
+            return cleaned.value;
+          });
+          if (child.type === "text") data[key] = data[key][0];
+        } else if (child.type === "records") data[key].forEach((row, index) => walk(child.item, row, [...path, key, String(index)], row));
+        else walk(child, data[key], [...path, key], record);
+      }
+    }
+    walk(saf.PROFILE_SCHEMA, profile);
+    if (JSON.stringify({ version: saf.PROFILE_VERSION, profile }).length > 1024 * 1024) throw new Error("整理后的资料超过 1 MB，请减少长文本后再导入。");
+    return profile;
+  };
   // Only identifying snippets are shown on the webpage; never use contact numbers or whole descriptions.
   saf.recordLabel = (group, record = {}) => {
     const identityKeys = {
@@ -42,7 +98,7 @@
       const letters = Array.from(text);
       return letters.length > limit ? letters.slice(0, limit - 1).join("") + "…" : text;
     };
-    const parts = (identityKeys[group] || []).map(key => typeof record[key] === "string" ? record[key].replace(/\s+/g, " ").trim() : "")
+    const parts = (identityKeys[group] || []).map(key => typeof record[key] === "string" ? saf.cleanFieldText(record[key]).replace(/\s+/g, " ").trim() : "")
       .filter(Boolean).map(text => clip(text, 36));
     const fallback = (saf.GROUPS.find(item => item.key === group)?.label || "记录") + "（待补充名称）";
     return parts.length ? clip([...new Set(parts)].join(" · "), 90) : fallback;
@@ -77,10 +133,13 @@
   saf.getFieldResolution = (profile, key) => {
     const legacy = saf.FIELD_RULES.find(item => item.key === key || `${item.group}.${item.key}` === key);
     const path = legacy ? [legacy.group, legacy.key] : key.split(".");
+    let schema = saf.PROFILE_SCHEMA;
+    for (const part of path) schema = schema?.type === "records" && /^\d+$/.test(part) ? schema.item : schema?.properties?.[part];
+    if (schema?.fillable === false) return { value: "", derived: false, sourceLabel: "", sourcePath: path.join(".") };
     const stored = saf.getPath(profile, path);
-    const value = Array.isArray(stored) ? stored.join("\n") : typeof stored === "string" ? stored : "";
+    const value = Array.isArray(stored) ? stored.map(saf.cleanFieldText).join("\n") : typeof stored === "string" ? saf.inspectFieldText(stored, schema?.singleValue).value : "";
     if (value.trim() || !legacy) return { value, derived: false, sourceLabel: "", sourcePath: path.join(".") };
-    const from = (content, sourcePath, sourceLabel) => ({ value: content || "", derived: Boolean(content), sourcePath, sourceLabel });
+    const from = (content, sourcePath, sourceLabel) => ({ value: saf.cleanFieldText(content), derived: Boolean(content), sourcePath, sourceLabel });
     if (legacy.group === "education") {
       const selected = latestRecord(profile?.educationHistory?.records, ["school", "college", "major", "educationLevel", "degree", "dateRange"]);
       if (selected) {
@@ -138,7 +197,7 @@
   saf.getProfileFields = profile => {
     const fields = saf.FIELD_RULES.map(rule => ({ ...rule, path: [rule.group, rule.key] }));
     for (const descriptor of saf.schemaDescriptors()) {
-      if (descriptor.schema.legacyKey) continue;
+      if (descriptor.schema.legacyKey || descriptor.schema.fillable === false) continue;
       const { schema, path, group } = descriptor;
       const wildcard = path.indexOf("*");
       const rows = wildcard === -1 ? [null] : Array.from(saf.getPath(profile, path.slice(0, wildcard)) || [], (_item, index) => index);
@@ -215,6 +274,6 @@
         for (const child of Object.keys(value)) profile[key][child] = incoming[child];
       } else throw new Error(`不支持字段：${key}。请使用个人资料中定义的英文键。`);
     }
-    return profile;
+    return saf.normalizeProfile(profile);
   };
 })();

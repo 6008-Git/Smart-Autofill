@@ -20,6 +20,7 @@ function inapplicableReason(leaf) {
   if(!match) return '';
   const [,group,index,key]=match;
   const row=profile[group].records[Number(index)];
+  if(group==='educationHistory' && row.educationLevel==='高中' && ['degree','college','major','coursework','researchFocus','thesisTitle','classRank','minorOrDualDegree','supervisor','gpa','laboratory'].includes(key)) return '高中阶段不适用，无需补充';
   if(group==='workExperience' && key==='departureReason' && /至今|现在|在职|\bpresent\b/i.test(row.dateRange)) return '仍在职，不需要补离职原因';
   if(group==='certificates' && ['listeningAndSpeaking','readingAndWriting'].includes(key) && !/英语|日语|韩语|法语|德语|俄语|语言|外语|CET|IELTS|TOEFL|JLPT/i.test(row.name+' '+row.certificateType)) return '非语言证书，不需要补语言能力';
   return '';

@@ -7,6 +7,7 @@
       if (schema.type === "object") {
         const children = [];
         for (const [key, child] of Object.entries(schema.properties)) {
+          if (child.fillable === false) continue;
           if (child.type === "records") {
             const rows = saf.getPath(profile, [...path, key]) || [];
             rows.forEach((row, index) => {

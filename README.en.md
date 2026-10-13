@@ -8,7 +8,7 @@
 
 A local Chrome / Edge extension for application forms. Click an input, choose saved information, and fill that field.
 
-[![Version](https://img.shields.io/badge/version-0.3.2-2563eb)](https://github.com/6008-Git/Smart-Autofill/releases)
+[![Version](https://img.shields.io/badge/version-0.3.3-2563eb)](https://github.com/6008-Git/Smart-Autofill/releases)
 [![Tests](https://github.com/6008-Git/Smart-Autofill/actions/workflows/ci.yml/badge.svg)](https://github.com/6008-Git/Smart-Autofill/actions/workflows/ci.yml)
 [![MIT](https://img.shields.io/badge/license-MIT-0f766e)](LICENSE)
 
@@ -66,6 +66,8 @@ LLMs can be valuable for open-ended responses and semantic reasoning. This exten
 
 Explore the [fictional sample](examples/profile.demo.json) and [English-key / Chinese-label mapping](doc/profile-field-mapping.json). Importing confirms replacement of the entire profile; export a backup first when needed.
 
+Explicit source annotations are moved into maintenance notes rather than filled into forms. Notes, sources and pending items are not fill candidates. Conflicting annotated single-value fields require confirmation. Secondary-school records can be maintained separately without inventing a degree or major.
+
 ## Development
 
 Runtime: Manifest V3, vanilla HTML/CSS/JavaScript. Tests use Node.js 24; packaging uses Python 3's standard library.
@@ -76,7 +78,7 @@ node scripts/verify-public.mjs
 python scripts/package-extension.py
 ```
 
-Local validation: **28 unit tests and 46 browser checks each in Chrome and Edge**. Browser checks use isolated profiles and fictional data, with dependency-free DevTools Protocol orchestration. CI runs unit tests, public-file verification and packaging. See [validation notes](doc/acceptance.md) for scope and reproduction details.
+Local validation: **35 unit tests and 48 browser checks each in Chrome and Edge**. Browser checks use isolated profiles and fictional data, with dependency-free DevTools Protocol orchestration. CI runs unit tests, public-file verification and packaging. See [validation notes](doc/acceptance.md) for scope and reproduction details.
 
 Contributions are welcome: [guide](CONTRIBUTING.md), [security notes](SECURITY.md), [changelog](CHANGELOG.md). Please report issues using fictional data and remove personal or session information.
 
